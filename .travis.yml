@@ -22,10 +22,18 @@ install:
   - git clone https://github.com/NyanKiyoshi/pytest-django-queries-ci-tools.git --depth 1 ../queries-ci-tools
   - >
     if [ -n "$DJANGO" ]; then
-      nvm install 10 \
-        && npm i \
-        && npm run build-emails
-    fi
+      echo test;
+      cp -r templates/templated_email/compiled ./compiled;
+      TEMPLATES_MD5_BEFORE=$(tar -cf - templates/templated_email/compiled | md5sum);
+      nvm install 10;
+      npm i;
+      npm run build-emails;
+      TEMPLATES_MD5_AFTER=$(tar -cf - templates/templated_email/compiled | md5sum);
+      if [ "$TEMPLATES_MD5_BEFORE" != "$TEMPLATES_MD5_AFTER" ]; then
+        echo "terminating jenkins cousin!";
+        diff -q ./compiled templates/templated_email/compiled
+      fi;
+    fi;
 
 script:
   - tox
